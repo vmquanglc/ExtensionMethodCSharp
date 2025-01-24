@@ -16,41 +16,14 @@ namespace ExtensionMethodCSharp
     public static class ExtensionUtility
     {
         #region Xử lý string
-        /// <summary>
-        /// Bỏ dấu tiếng Việt
-        /// </summary>
-        /// <param name="text">value</param>
-        /// <returns>Chuỗi đã bỏ dấu</returns>
-        public static string RemoveVNSignV1(this string text)
+        public static string RemoveSignChar(this string text)
         {
-            if (string.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(text.Trim()))
             {
-                return string.Empty;
+                return text;
             }
-
-            System.Text.StringBuilder result = new System.Text.StringBuilder();
-            string temp = text;
-            temp = temp.Replace("&", " ");
-            
-            //replace đối với đ Đ
-            temp = Regex.Replace(temp, "Đ", "D");
-            temp = Regex.Replace(temp, "đ", "d");
-
-            // normalize the Unicode
-            temp = temp.Normalize(System.Text.NormalizationForm.FormKD);
-            foreach (char s in temp)
-            {
-                if ((char.GetUnicodeCategory(s) != UnicodeCategory.NonSpacingMark) && !(char.IsPunctuation(s)) && !(char.IsSymbol(s)))
-                {
-                    result.Append(s);
-                }
-            }
-            return result.ToString();
-        }
-        public static string RemoveVNSignV2(this string text)
-        {
             var result = text;
-            if (!string.IsNullOrWhiteSpace(text))
+            try
             {
                 var originalChar = new string[] { "ÁÀẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶ", "ÉÈẺẼẸÊẾỀỂỄỆ", "ÍÌỈĨỊ", "ÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ", "ÚÙỦŨỤƯỨỪỬỮỰ", "ÝỲỶỸỴ", "Đ" };
                 var replaceChar = new string[] { "A", "E", "I", "O", "U", "Y", "D" };
@@ -58,36 +31,80 @@ namespace ExtensionMethodCSharp
                 {
                     var reg = new Regex("[" + originalChar[i] + "]");
                     result = reg.Replace(result, replaceChar[i]);
-
+        
                     reg = new Regex("[" + originalChar[i].ToLower() + "]");
                     result = reg.Replace(result, replaceChar[i].ToLower());
                 }
             }
+            catch (Exception ex)
+            {
+        
+            }
             return result;
         }
         #endregion
-
+        
         #region Enum
-        /// <summary>
-        /// Get displayname theo enum
-        /// </summary>
-        /// <param name="enumType"></param>
-        /// <returns></returns>
-        public static string GetEnumDisplayName(this Enum enumType)
+        public static string GetDisplayName(this Enum enumType)
         {
             string result = string.Empty;
             try
             {
-                result = enumType?.GetType()?.GetMember(enumType.ToString())?
+                result = enumType.GetType()?.GetMember(enumType.ToString())?
                                .First()?
-                               .GetCustomAttribute<System.ComponentModel.DataAnnotations.DisplayAttribute>()?
-                               .Name ?? string.Empty;
+                               .GetCustomAttribute<DisplayAttribute>()?
+                               .Name ?? enumType.ToString();
             }
             catch (Exception ex)
             {
                 //
             }
             return result;
+        }
+        #endregion
+        
+        #region datetime
+        public static DateTime GetFirstOfDay(this DateTime date)
+        {
+            return new DateTime(date.Year, date.Month, date.Day);
+        }
+        public static DateTime GetLastOfDay(this DateTime date)
+        {
+            return date.GetFirstOfDay().AddDays(1).AddMilliseconds(-1);
+        }
+        public static DateTime GetFirstOfWeek(this DateTime date)
+        {
+            var diffVsBegin = 0;
+            if (date.DayOfWeek == DayOfWeek.Sunday)
+            {
+                diffVsBegin = 6;
+            }
+            else
+            {
+                diffVsBegin = date.DayOfWeek - DayOfWeek.Monday;
+            }
+            var firstDayOfWeek = date.AddDays(-diffVsBegin);
+            return new DateTime(firstDayOfWeek.Year, firstDayOfWeek.Month, firstDayOfWeek.Day);
+        }
+        public static DateTime GetLastOfWeek(this DateTime date)
+        {
+            return date.GetFirstOfWeek().AddDays(7).AddMilliseconds(-1);
+        }
+        public static DateTime GetFirstDayOfMonth(this DateTime date)
+        {
+            return new DateTime(date.Year, date.Month, 1);
+        }
+        public static DateTime GetLastDayOfMonth(this DateTime date)
+        {
+            return date.GetFirstDayOfMonth().AddMonths(1).AddTicks(-1);
+        }
+        public static DateTime GetFirstDayOfYear(this DateTime date)
+        {
+            return new DateTime(date.Year, 1, 1);
+        }
+        public static DateTime GetLastDayOfYear(this DateTime date)
+        {
+            return date.GetFirstDayOfYear().AddYears(1).AddTicks(-1);
         }
         #endregion
     }
